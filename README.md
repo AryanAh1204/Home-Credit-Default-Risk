@@ -21,6 +21,7 @@ to help lenders make better credit decisions.
 7. Working class & commercial associate — income and employment comparison
 8. Default rate by family member count
 9. Default rate by age bucket × payment burden bucket
+10. EXT_SOURCE_1, 2, 3 bucketed vs default rate
 
 ### Key Findings
 
@@ -47,8 +48,22 @@ upper age range.
 No consistent relationship between family size and default rate.
 Not a reliable standalone feature.
 
+**Finding 5 — EXT_SOURCE scores are the strongest predictors:**
+All three external credit scores (likely equivalent to CIBIL/FICO
+scores) show monotonic decrease in default rate from Q1 to Q4
+across all three sources — a 6x difference between lowest and
+highest quartile. These outperform all demographic variables as
+standalone predictors and will be prioritized in feature engineering.
+
+| Score | Q1 Default Rate | Q4 Default Rate | Ratio |
+|-------|----------------|----------------|-------|
+| EXT_SOURCE_1 | 16.04% | 2.83% | 5.7x |
+| EXT_SOURCE_2 | 17.52% | 2.64% | 6.6x |
+| EXT_SOURCE_3 | 19.11% | 3.23% | 5.9x |
+
 **Overarching Pattern:**
 Payment burden alone is a weak predictor. It only compounds risk
 when interacted with demographic variables like education and age.
-Feature engineering should prioritize interaction terms over
-standalone burden.
+EXT_SOURCE scores dominate all other features. Feature engineering
+should prioritize EXT_SOURCE interactions and demographic
+combinations over standalone burden metrics.
