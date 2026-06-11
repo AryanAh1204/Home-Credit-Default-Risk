@@ -1,5 +1,4 @@
 select
-	t.name_income_type,
   	CASE
     	WHEN amt_annuity / amt_income_total < 0.1 THEN 'Low burden (<10%)'
     	WHEN amt_annuity / amt_income_total < 0.2 THEN 'Moderate (10-20%)'
@@ -10,5 +9,5 @@ select
   	ROUND(AVG(target)*100, 2) AS default_rate
 FROM application_train t
 WHERE amt_income_total > 0
-GROUP BY 1 , 2 
-ORDER BY 4 DESC;
+GROUP BY 1
+ORDER BY 3 DESC;
