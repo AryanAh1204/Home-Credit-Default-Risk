@@ -156,3 +156,50 @@ strongest predictor family.
 - Metric: ROC-AUC (accuracy is misleading under imbalance)
 
 ### Parameters
+n_estimators=200, max_depth=4, learning_rate=0.1, random_state=42
+Shallow trees (depth 4) sufficient — interactions were pre-engineered,
+so the model needs less depth to capture them.
+
+### Results
+
+| Metric | Value |
+|---|---|
+| Test AUC (single split) | 0.762 |
+| **CV AUC (5-fold stratified)** | **0.757 ± 0.006** |
+
+Low std (0.006) across folds confirms the score is stable, not a
+favorable split. Reported number is the cross-validated 0.757.
+
+### Top Features (by importance)
+
+| Rank | Feature | Importance |
+|---|---|---|
+| 1 | EXT_SOURCE_MEAN (engineered) | 0.155 |
+| 2 | NAME_EDUCATION_TYPE_Higher education | 0.038 |
+
+The engineered EXT_SOURCE_MEAN is the single strongest predictor —
+closing the loop from SQL (Finding 5) through EDA, feature
+engineering, and the model. The #2 feature validates SQL Finding 1
+(education). The model's top features mirror the SQL findings in order.
+
+---
+
+## Phase 5: Dashboard *(upcoming)*
+
+Tableau dashboard covering:
+- Default probability by applicant segment
+- Feature importance visualization
+- Risk band distribution
+
+---
+
+## Tech Stack
+- SQL — PostgreSQL, DBeaver
+- Python — pandas, seaborn, matplotlib, scikit-learn, XGBoost
+- Visualization — Tableau
+- Version control — Git / GitHub
+
+---
+
+## Author
+Aryan Ahlawat
