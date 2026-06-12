@@ -17,7 +17,7 @@ to help lenders make better credit decisions.
 | 2. Python EDA | ✅ Complete |
 | 3. Feature Engineering | ✅ Complete |
 | 4. XGBoost Modeling | ✅ Complete |
-| 5. Tableau Dashboard | ⏳ Pending |
+| 5. Tableau Dashboard | ✅ Complete |
 
 ---
 
@@ -112,8 +112,9 @@ applicants riskiest, oldest safest. Confirms SQL Finding 3 in pandas.
 
 **Occupation Type:**
 Default rate ranges from 4.8% (Accountants) to 17% (Low-skill Laborers)
-— a 3.5x spread. Both groups have large sample sizes; skill level
-tracks default risk closely.
+— a 3.6x spread. Both groups have large sample sizes; skill level
+tracks default risk closely. Low-skill Laborers are a distinct
+high-risk segment, not just the bottom of a continuous scale.
 
 **Correlation Matrix:**
 TARGET shows weak linear correlation with all features — expected,
@@ -130,16 +131,16 @@ via the CREDIT_TERM ratio.
 |---|---|---|
 | EXT_SOURCE_MEAN | mean of EXT_SOURCE_2, 3 (NaN-aware) | Robust creditworthiness signal; preserved score for 61,165 rows (20% of data) that naive arithmetic would have nulled |
 | CREDIT_TERM | AMT_ANNUITY / AMT_CREDIT | Repayment burden as a single ratio; resolves the 0.77 credit-annuity collinearity |
-| EXT_SOURCE_MEAN × CREDIT_TERM | interaction | Strongest predictor × repayment stress |
-| EXT_SOURCE_MEAN × AMT_INCOME_TOTAL | interaction | Tests whether a low score matters less for high earners (SQL Finding 2) |
-| EXT_SOURCE_MEAN × AGE_YEARS | interaction | Tests score effect across age (SQL Finding 3) |
+| EXT_SOURCE_MEAN x CREDIT_TERM | interaction | Strongest predictor x repayment stress |
+| EXT_SOURCE_MEAN x AMT_INCOME_TOTAL | interaction | Tests whether a low score matters less for high earners (SQL Finding 2) |
+| EXT_SOURCE_MEAN x AGE_YEARS | interaction | Tests score effect across age (SQL Finding 3) |
 
 Original columns retained — pruning deferred to feature importance,
 not correlation (valid for tree models).
 
-**Note on EXT_SOURCE_MEAN:** Used `.mean(axis=1)` over naive
+**Note on EXT_SOURCE_MEAN:** Used .mean(axis=1) over naive
 arithmetic to skip NaNs. Naive method → 61,395 nulls;
-`.mean(axis=1)` → 230 nulls. 61,165 rows (20% of data) retained
+.mean(axis=1) → 230 nulls. 61,165 rows (20% of data) retained
 their external-score signal — significant given EXT_SOURCE is the
 strongest predictor family.
 
@@ -151,12 +152,13 @@ strongest predictor family.
 
 ### Setup
 - Split: 80/20 train/test, stratified on TARGET (preserves 8.07% default rate)
-- Categoricals: one-hot encoded with `dummy_na=True` (missingness kept as signal)
-- Imbalance: `scale_pos_weight` ≈ 11.4 to counter the 92/8 class skew
+- Categoricals: one-hot encoded with dummy_na=True (missingness kept as signal)
+- Imbalance: scale_pos_weight ~ 11.4 to counter the 92/8 class skew
 - Metric: ROC-AUC (accuracy is misleading under imbalance)
 
 ### Parameters
 n_estimators=200, max_depth=4, learning_rate=0.1, random_state=42
+
 Shallow trees (depth 4) sufficient — interactions were pre-engineered,
 so the model needs less depth to capture them.
 
@@ -165,7 +167,7 @@ so the model needs less depth to capture them.
 | Metric | Value |
 |---|---|
 | Test AUC (single split) | 0.762 |
-| **CV AUC (5-fold stratified)** | **0.757 ± 0.006** |
+| CV AUC (5-fold stratified) | 0.757 +- 0.006 |
 
 Low std (0.006) across folds confirms the score is stable, not a
 favorable split. Reported number is the cross-validated 0.757.
@@ -184,12 +186,15 @@ engineering, and the model. The #2 feature validates SQL Finding 1
 
 ---
 
-## Phase 5: Dashboard *(upcoming)*
+## Phase 5: Tableau Dashboard
 
-Tableau dashboard covering:
-- Default probability by applicant segment
-- Feature importance visualization
-- Risk band distribution
+Live dashboard:
+https://public.tableau.com/views/Home-Credit-Default-Risk/Dashboard1
+
+Three views, each mapping to a validated SQL finding:
+- Default risk drops ~6x as credit score rises (EXT_SOURCE quartiles)
+- Skill level tracks default risk — 3.6x spread across occupations
+- Default risk decreases monotonically with age
 
 ---
 
