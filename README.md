@@ -1,5 +1,5 @@
 # Home-Credit-Default-Risk
-End-to-end credit risk modeling on 307K loan applications — SQL analysis, Python EDA, XGBoost, Tableau
+End-to-end credit risk modeling on 307K loan applications — SQL analysis, Python EDA, feature engineering, XGBoost, Tableau
 
 ## Problem Statement
 Predict loan default probability for 307K applicants (8.07% default rate)
@@ -8,6 +8,18 @@ to help lenders make better credit decisions.
 ## Data
 - Source: Kaggle — Home Credit Default Risk
 - 307,511 rows, loaded into PostgreSQL via DBeaver
+
+## Project Phases
+
+| Phase | Status |
+|---|---|
+| 1. SQL Exploratory Analysis | ✅ Complete |
+| 2. Python EDA | ✅ Complete |
+| 3. Feature Engineering | ✅ Complete |
+| 4. XGBoost Modeling | ✅ Complete |
+| 5. Tableau Dashboard | ⏳ Pending |
+
+---
 
 ## Phase 1: SQL Exploratory Analysis
 
@@ -50,10 +62,8 @@ Not a reliable standalone feature.
 
 **Finding 5 — EXT_SOURCE scores are the strongest predictors:**
 All three external credit scores (likely equivalent to CIBIL/FICO
-scores) show monotonic decrease in default rate from Q1 to Q4
-across all three sources — a 6x difference between lowest and
-highest quartile. These outperform all demographic variables as
-standalone predictors and will be prioritized in feature engineering.
+scores) show monotonic decrease in default rate from Q1 to Q4 —
+a 6x difference between lowest and highest quartile.
 
 | Score | Q1 Default Rate | Q4 Default Rate | Ratio |
 |-------|----------------|----------------|-------|
@@ -64,6 +74,85 @@ standalone predictors and will be prioritized in feature engineering.
 **Overarching Pattern:**
 Payment burden alone is a weak predictor. It only compounds risk
 when interacted with demographic variables like education and age.
-EXT_SOURCE scores dominate all other features. Feature engineering
-should prioritize EXT_SOURCE interactions and demographic
-combinations over standalone burden metrics.
+EXT_SOURCE scores dominate all other features.
+
+---
+
+## Phase 2: Python EDA
+
+### Data Cleaning
+
+| Decision | Rationale |
+|---|---|
+| Dropped 67 columns | Exceeded 40% null threshold → 73 columns retained |
+| EXT_SOURCE_1 removed | 56% missing values — data availability issue, not signal issue |
+| DAYS_EMPLOYED anomaly handled | Sentinel value 365243 replaced with NaN; flag column created |
+
+**DAYS_EMPLOYED Anomaly:**
+55,352 records contained the sentinel value 365243, identifying
+pensioners and unemployed applicants. Binary flag DAYS_EMPLOYED_ANOMALY
+created to preserve the signal.
+
+| Group | Default Rate |
+|---|---|
+| Anomaly group (pensioners/unemployed) | 5.4% |
+| Normal population | 8.66% |
+
+### EDA Findings
+
+**EXT_SOURCE_2 and EXT_SOURCE_3 Distributions:**
+Both scores show the same directional pattern: non-defaulters cluster
+at high values; defaulters spread across the low-to-mid range.
+Low inter-correlation between the two — independent predictive signal.
+Both retained as separate features.
+
+**Age:**
+Default rate decreases monotonically across age decades — youngest
+applicants riskiest, oldest safest. Confirms SQL Finding 3 in pandas.
+
+**Occupation Type:**
+Default rate ranges from 4.8% (Accountants) to 17% (Low-skill Laborers)
+— a 3.5x spread. Both groups have large sample sizes; skill level
+tracks default risk closely.
+
+**Correlation Matrix:**
+TARGET shows weak linear correlation with all features — expected,
+since predictive signal lives in interactions, not single-feature
+linear relationships (justifies tree-based model over linear).
+AMT_CREDIT and AMT_ANNUITY strongly correlated (0.77) — addressed
+via the CREDIT_TERM ratio.
+
+---
+
+## Phase 3: Feature Engineering
+
+| Feature | Definition | Rationale |
+|---|---|---|
+| EXT_SOURCE_MEAN | mean of EXT_SOURCE_2, 3 (NaN-aware) | Robust creditworthiness signal; preserved score for 61,165 rows (20% of data) that naive arithmetic would have nulled |
+| CREDIT_TERM | AMT_ANNUITY / AMT_CREDIT | Repayment burden as a single ratio; resolves the 0.77 credit-annuity collinearity |
+| EXT_SOURCE_MEAN × CREDIT_TERM | interaction | Strongest predictor × repayment stress |
+| EXT_SOURCE_MEAN × AMT_INCOME_TOTAL | interaction | Tests whether a low score matters less for high earners (SQL Finding 2) |
+| EXT_SOURCE_MEAN × AGE_YEARS | interaction | Tests score effect across age (SQL Finding 3) |
+
+Original columns retained — pruning deferred to feature importance,
+not correlation (valid for tree models).
+
+**Note on EXT_SOURCE_MEAN:** Used `.mean(axis=1)` over naive
+arithmetic to skip NaNs. Naive method → 61,395 nulls;
+`.mean(axis=1)` → 230 nulls. 61,165 rows (20% of data) retained
+their external-score signal — significant given EXT_SOURCE is the
+strongest predictor family.
+
+---
+
+## Phase 4: Modeling
+
+**Model:** XGBoost Classifier
+
+### Setup
+- Split: 80/20 train/test, stratified on TARGET (preserves 8.07% default rate)
+- Categoricals: one-hot encoded with `dummy_na=True` (missingness kept as signal)
+- Imbalance: `scale_pos_weight` ≈ 11.4 to counter the 92/8 class skew
+- Metric: ROC-AUC (accuracy is misleading under imbalance)
+
+### Parameters
