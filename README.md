@@ -62,10 +62,12 @@ Not a reliable standalone feature.
 
 **Finding 5 — EXT_SOURCE scores are the strongest predictors:**
 All three external credit scores (likely equivalent to CIBIL/FICO
-scores) show monotonic decrease in default rate from Q1 to Q4 —
-a 6x difference between lowest and highest quartile.
+scores) show monotonic decrease in default rate from lowest to
+highest score band — a 6x difference between the two. (Buckets are
+fixed 0.25-wide bands, not quartiles — the score distributions
+aren't uniform, so equal-width bins don't mean equal-count.)
 
-| Score | Q1 Default Rate | Q4 Default Rate | Ratio |
+| Score | Band 1 (Lowest) Default Rate | Band 4 (Highest) Default Rate | Ratio |
 |-------|----------------|----------------|-------|
 | EXT_SOURCE_1 | 16.04% | 2.83% | 5.7x |
 | EXT_SOURCE_2 | 17.52% | 2.64% | 6.6x |
@@ -89,9 +91,9 @@ EXT_SOURCE scores dominate all other features.
 | DAYS_EMPLOYED anomaly handled | Sentinel value 365243 replaced with NaN; flag column created |
 
 **DAYS_EMPLOYED Anomaly:**
-55,352 records contained the sentinel value 365243, identifying
-pensioners and unemployed applicants. Binary flag DAYS_EMPLOYED_ANOMALY
-created to preserve the signal.
+55,374 records contained the sentinel value 365243 (55,352 pensioners,
+22 unemployed applicants). Binary flag DAYS_EMPLOYED_ANOMALY created
+to preserve the signal.
 
 | Group | Default Rate |
 |---|---|
@@ -152,7 +154,7 @@ strongest predictor family.
 
 ### Setup
 - Split: 80/20 train/test, stratified on TARGET (preserves 8.07% default rate)
-- Categoricals: one-hot encoded with dummy_na=True (missingness kept as signal)
+- Categoricals: one-hot encoded (drop_first=True); missingness kept as signal via explicit flag columns (e.g. DAYS_EMPLOYED_ANOMALY), not dummy_na
 - Imbalance: scale_pos_weight ~ 11.4 to counter the 92/8 class skew
 - Metric: ROC-AUC (accuracy is misleading under imbalance)
 
@@ -192,7 +194,7 @@ Live dashboard:
 https://public.tableau.com/views/Home-Credit-Default-Risk/Dashboard1
 
 Three views, each mapping to a validated SQL finding:
-- Default risk drops ~6x as credit score rises (EXT_SOURCE quartiles)
+- Default risk drops ~6x as credit score rises (EXT_SOURCE score bands)
 - Skill level tracks default risk — 3.6x spread across occupations
 - Default risk decreases monotonically with age
 

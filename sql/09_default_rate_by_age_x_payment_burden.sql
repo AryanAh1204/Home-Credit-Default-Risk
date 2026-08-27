@@ -15,5 +15,6 @@ select
     sum(target) as total_defaults,
     round(avg(target)*100,2) as default_rate
 from application_train t
+where amt_income_total > 0
 group by 1,2
 order by 5 desc;

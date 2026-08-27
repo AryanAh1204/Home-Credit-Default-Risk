@@ -1,9 +1,9 @@
 select 
 	case
-		when t.ext_source_1 < 0.25 then 'Q1 (Lowest)'
-		when t.ext_source_1 < 0.50 then 'Q2'
-		when t.ext_source_1 < 0.75 then 'Q3'
-	else 'Q4 (Highest)'
+		when t.ext_source_1 < 0.25 then 'Band 1 (Lowest)'
+		when t.ext_source_1 < 0.50 then 'Band 2'
+		when t.ext_source_1 < 0.75 then 'Band 3'
+	else 'Band 4 (Highest)'
 	end as ext_source_1_bucket,
 	count(*) as total_applicants,
 	sum(target) as total_defaults,
@@ -15,10 +15,10 @@ order by 4 desc
 
 select 
 	case
-		when t.ext_source_2 < 0.25 then 'Q1 (Lowest)'
-		when t.ext_source_2 < 0.50 then 'Q2'
-		when t.ext_source_2 < 0.75 then 'Q3'
-	else 'Q4 (Highest)'
+		when t.ext_source_2 < 0.25 then 'Band 1 (Lowest)'
+		when t.ext_source_2 < 0.50 then 'Band 2'
+		when t.ext_source_2 < 0.75 then 'Band 3'
+	else 'Band 4 (Highest)'
 	end as ext_source_2_bucket,
 	count(*) as total_applicants,
 	sum(target) as total_defaults,
@@ -30,10 +30,10 @@ order by 4 desc
 
 select 
 	case
-		when t.ext_source_3 < 0.25 then 'Q1 (Lowest)'
-		when t.ext_source_3 < 0.50 then 'Q2'
-		when t.ext_source_3 < 0.75 then 'Q3'
-	else 'Q4 (Highest)'
+		when t.ext_source_3 < 0.25 then 'Band 1 (Lowest)'
+		when t.ext_source_3 < 0.50 then 'Band 2'
+		when t.ext_source_3 < 0.75 then 'Band 3'
+	else 'Band 4 (Highest)'
 	end as ext_source_3_bucket,
 	count(*) as total_applicants,
 	sum(target) as total_defaults,
